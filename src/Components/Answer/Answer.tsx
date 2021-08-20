@@ -1,5 +1,6 @@
+import {Draggable, DraggableProvided} from 'react-beautiful-dnd';
+
 import classes from './Answer.module.css';
-import {Draggable} from 'react-beautiful-dnd';
 
 interface Props {
     word: {
@@ -10,17 +11,19 @@ interface Props {
 }
 
 export const Answer = ({word, index}: Props) => {
+    const renderWord = (provided: DraggableProvided) => (
+        <span className={`${classes.answer} ${classes.app__answer}`}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+        >
+            {word.text}
+        </span>
+    );
+
     return (
         <Draggable draggableId={`word-${word.id}`} index={index}>
-            {provided => (
-                <span className={`${classes.answer} ${classes.app__answer}`}
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                >
-                    {word.text}
-                </span>
-            )}
-      </Draggable>
+            {(provided) => renderWord(provided)}
+        </Draggable>
     );
 }

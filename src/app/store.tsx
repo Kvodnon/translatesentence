@@ -8,5 +8,3 @@ export const store = configureStore({
     userWords: userWordsReducer
   }
 });
-
-export type State = ReturnType<typeof store.getState>

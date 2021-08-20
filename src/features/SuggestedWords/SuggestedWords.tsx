@@ -1,22 +1,30 @@
 import { useSelector } from "react-redux";
+import {Droppable, DroppableProvided} from 'react-beautiful-dnd';
+
+import { State, Word } from '../../app/interfaces';
 import { Answer } from "../../Components/Answer/Answer";
-import { selectSuggested } from "./suggestedWordsSlice";
-import {Droppable} from 'react-beautiful-dnd';
+
 import classes from './SuggestedWords.module.css';
 
 export const SuggestedWords = ({isDropDisabled}: {isDropDisabled:boolean}) => {
-    const suggestedList = useSelector(selectSuggested);
+    const suggestedList = useSelector((state: State) => state.suggestedWords);
+
+    const listOfWords = (words: Word[]) => (
+        words.map((word, index) => (
+            <Answer key={`word-${word.id}`} index={index} word={word}  />
+        ))
+    );
+
+    const renderWords = (provided: DroppableProvided) => (
+        <div className={classes["suggested-words"]} {...provided.droppableProps} ref={provided.innerRef}>
+            {listOfWords(suggestedList)}
+            {provided.placeholder}
+        </div>  
+    );
 
     return (
         <Droppable droppableId="suggested-list" direction="horizontal" isDropDisabled={isDropDisabled}>
-            {(provided) => (
-                <div className={classes["suggested-words"]} {...provided.droppableProps} ref={provided.innerRef}>
-                    {suggestedList.map((word, index) => (
-                        <Answer key={`word-${word.id}`} index={index} word={word} />
-                    ))}
-                    {provided.placeholder}
-                </div>  
-            )}
+            {(provided) => renderWords(provided)}
         </Droppable>
     );
 }

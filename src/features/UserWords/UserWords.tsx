@@ -1,22 +1,31 @@
 import { useSelector } from "react-redux";
+
+import { Word, State } from '../../app/interfaces';
 import { Answer } from "../../Components/Answer/Answer";
-import { selectUserWords } from "./userWordsSlice";
+import { Droppable, DroppableProvided } from 'react-beautiful-dnd';
+
 import classes from './UserWords.module.css';
-import {Droppable} from 'react-beautiful-dnd';
+
 
 export const UserWords = () => {
-    const userWords = useSelector(selectUserWords);
+    const userWords = useSelector((state: State) => state.userWords);
+
+    const listOfWords = (words: Word[]) => (
+        words.map((word, index) => (
+            <Answer key={`word-${word.id}`} index={index} word={word}  />
+        ))
+    );
+
+    const renderWords = (provided: DroppableProvided) => (
+        <div className={classes['user-words']} {...provided.droppableProps} ref={provided.innerRef}>
+            {listOfWords(userWords)}
+            {provided.placeholder}
+        </div>  
+    );
 
     return (
         <Droppable droppableId="user-answer" direction="horizontal">
-            {(provided) => (
-                <div className={classes['user-words']} {...provided.droppableProps} ref={provided.innerRef}>
-                    {userWords.map((word, index) => (
-                        <Answer key={`word-${word.id}`} index={index} word={word}  />
-                    ))}
-                    {provided.placeholder}
-                </div>  
-            )}
+            {(provided) => renderWords(provided)}
         </Droppable>
     );
 }

@@ -1,31 +1,30 @@
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {DragDropContext, DraggableLocation, DragStart, DropResult} from 'react-beautiful-dnd';
-import classes from './App.module.css';
-import { UserWords } from '../features/UserWords/UserWords';
-import { SuggestedWords } from '../features/SuggestedWords/SuggestedWords';
-import { selectSuggested, setSuggestedList } from '../features/SuggestedWords/suggestedWordsSlice';
-import { selectUserWords, setUserAnswerList } from '../features/UserWords/userWordsSlice';
-import { useState } from 'react';
 
-interface Word {
-  id: number,
-  text: string,
-}
+import { Word, State, KeyAsName } from "../app/interfaces";
+import { UserWords } from "../features/UserWords/UserWords";
+import { setUserAnswerList } from "../features/UserWords/userWordsSlice";
+import { SuggestedWords } from "../features/SuggestedWords/SuggestedWords";
+import { setSuggestedList } from "../features/SuggestedWords/suggestedWordsSlice";
 
-interface KeyAsName {
-  [key: string]: Word[]
-}
-
+import classes from "./App.module.css";
 
 function App() {
   const dispatch = useDispatch();
-  const userAnswer = useSelector(selectUserWords);
-  const suggested = useSelector(selectSuggested);
-  const [isSuggestedDropDisabled, setIsSuggestedDropDisabled] = useState(true);
+  const userAnswer = useSelector((state: State) => state.userWords);
+  const suggested = useSelector((state: State) => state.suggestedWords);
+  const [ isSuggestedDropDisabled, setIsSuggestedDropDisabled ] = useState<boolean>(true);
   
   const id2List: KeyAsName = {
-      'user-answer': userAnswer,
-      'suggested-list': suggested
+      'user-answer': {
+        list: userAnswer,
+        setList: setUserAnswerList
+      },
+      'suggested-list': {
+        list: suggested,
+        setList: setSuggestedList
+      }
   };
 
   // a little function to help us with reordering the result
@@ -36,11 +35,9 @@ function App() {
   
       return result;
   };
-
   
-  const sortSuggestedWords = (suggestedWords: Word[]) => {
-    return [...suggestedWords].sort((prev: Word, next: Word) => prev.id - next.id);
-  }
+  const sortSuggestedWords = (suggestedWords: Word[]) => [...suggestedWords].sort((prev: Word, next: Word) => prev.id - next.id);
+  
   /**
    * Moves an item from one list to another list.
    */
@@ -51,31 +48,27 @@ function App() {
   
       destClone.splice(droppableDestination.index, 0, removed);
   
-      const result:KeyAsName = {};
-      result[droppableSource.droppableId] = sourceClone;
-      result[droppableDestination.droppableId] = destClone;
+      const result = {
+        [droppableSource.droppableId]: sourceClone,
+        [droppableDestination.droppableId]: destClone
+      };
   
       return result;
   };
+
   /**
    * A semi-generic way to handle multiple lists. Matches
    * the IDs of the droppable container to the names of the
    * source arrays stored in the state.
    */
 
-  const getList = (id: string): Word[] => id2List[id];
+  const getList = (id: string): Word[] => id2List[id].list;
 
-
-  const onDragStart = (result: DragStart) => {
-      const { source } = result;
-
-      if (source.droppableId === 'user-answer') {
-        setIsSuggestedDropDisabled(false);
-      }
-  };
+  const onDragStart = (result: DragStart) => result.source.droppableId === 'user-answer' && setIsSuggestedDropDisabled(false);
 
   const onDragEnd = (result: DropResult) => {
       const { source, destination } = result;
+      const handler = id2List[source.droppableId];
 
       // dropped outside the list
       if (!destination) {
@@ -89,13 +82,9 @@ function App() {
               destination.index
           );
 
-          if (source.droppableId === 'user-answer') {
-            dispatch(setUserAnswerList(items));
-          } else {
-            dispatch(setSuggestedList(items));
-          }
+          handler.setList(items);
       } else {
-          const result: KeyAsName = move(
+          const result = move(
               getList(source.droppableId),
               getList(destination.droppableId),
               source,
@@ -119,8 +108,8 @@ function App() {
         <h1 className={classes.heading}>Переведите это предложение</h1>
 
         <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
-          <UserWords key={"user-answer"} />
-          <SuggestedWords key={"suggested-list"} isDropDisabled={isSuggestedDropDisabled}/> 
+          <UserWords key="user-answer" />
+          <SuggestedWords key="suggested-list" isDropDisabled={isSuggestedDropDisabled}/> 
         </DragDropContext>
         
       </div>

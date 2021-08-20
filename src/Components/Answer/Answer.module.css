@@ -4,19 +4,7 @@
     border-radius: 10px;
     cursor: grab;
 }
-/* .answer[draggable=false] {
-    color: transparent;
-    background: #ccc;
-    cursor: pointer;
-} */
 .app__answer {
     margin: 0 5px;
     padding: 5px 10px;
-}
-.user-answer {
-    
-
-}
-.right-answer {
-
 }
