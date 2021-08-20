@@ -13,3 +13,7 @@ export interface KeyAsName {
         setList: Function
     }
 }
+
+export interface ISuggestedWords {
+    isDropDisabled:boolean
+}

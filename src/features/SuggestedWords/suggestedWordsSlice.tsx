@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-import { Word } from '../../app/interfaces';
+import { Word } from "../../app/interfaces";
 
 export const SuggestedWordsSlice = createSlice({
     name: 'suggestedWords',

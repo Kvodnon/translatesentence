@@ -1,8 +1,8 @@
 import { useSelector } from "react-redux";
+import { Droppable, DroppableProvided } from "react-beautiful-dnd";
 
-import { Word, State } from '../../app/interfaces';
+import { Word, State } from "../../app/interfaces";
 import { Answer } from "../../Components/Answer/Answer";
-import { Droppable, DroppableProvided } from 'react-beautiful-dnd';
 
 import classes from './UserWords.module.css';
 

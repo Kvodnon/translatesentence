@@ -1,6 +1,6 @@
-import {Draggable, DraggableProvided} from 'react-beautiful-dnd';
+import {Draggable, DraggableProvided} from "react-beautiful-dnd";
 
-import classes from './Answer.module.css';
+import classes from "./Answer.module.css";
 
 interface Props {
     word: {

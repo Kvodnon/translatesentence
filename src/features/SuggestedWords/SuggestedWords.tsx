@@ -1,12 +1,12 @@
 import { useSelector } from "react-redux";
-import {Droppable, DroppableProvided} from 'react-beautiful-dnd';
+import {Droppable, DroppableProvided} from "react-beautiful-dnd";
 
-import { State, Word } from '../../app/interfaces';
+import { ISuggestedWords, State, Word } from "../../app/interfaces";
 import { Answer } from "../../Components/Answer/Answer";
 
 import classes from './SuggestedWords.module.css';
 
-export const SuggestedWords = ({isDropDisabled}: {isDropDisabled:boolean}) => {
+export const SuggestedWords = ({isDropDisabled}: ISuggestedWords) => {
     const suggestedList = useSelector((state: State) => state.suggestedWords);
 
     const listOfWords = (words: Word[]) => (

@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+
 import suggestedWordsReducer from "../features/SuggestedWords/suggestedWordsSlice";
 import userWordsReducer from "../features/UserWords/userWordsSlice";
 
