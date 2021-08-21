@@ -1,10 +1,10 @@
-.answer {
+.word {
     border: 1px solid #ccc;
     background: white;
     border-radius: 10px;
     cursor: grab;
 }
-.app__answer {
+.app__word {
     margin: 0 5px;
     padding: 5px 10px;
 }

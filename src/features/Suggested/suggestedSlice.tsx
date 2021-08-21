@@ -2,31 +2,31 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { Word } from "../../app/interfaces";
 
-export const SuggestedWordsSlice = createSlice({
-    name: 'suggestedWords',
+export const SuggestedSlice = createSlice({
+    name: 'suggested',
     initialState: [
         {
             id: 1,
             text: 'She'
         },
         {
-            id: 2,
-            text: 'is'
-        },
-        {
             id: 3,
             text: 'eating'
+        },
+        {
+            id: 2,
+            text: 'is'
         }
     ] as Word[],
     reducers: {
-        setSuggestedList: (_, action: PayloadAction<Word[]>) => {
+        setSuggestedWords: (_, action: PayloadAction<Word[]>) => {
             return action.payload;
         }
     }
 });
 
 export const {
-    setSuggestedList,
-} = SuggestedWordsSlice.actions;
+    setSuggestedWords
+} = SuggestedSlice.actions;
 
-export default SuggestedWordsSlice.reducer;
+export default SuggestedSlice.reducer;
