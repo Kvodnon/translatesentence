@@ -1,18 +1,12 @@
-import {Draggable, DraggableProvided} from "react-beautiful-dnd";
+import { Draggable, DraggableProvided } from "react-beautiful-dnd";
 
-import classes from "./Answer.module.css";
+import { WordProps } from '../../app/interfaces';
 
-interface Props {
-    word: {
-        id: number,
-        text: string
-    },
-    index: number
-}
+import classes from "./Word.module.css";
 
-export const Answer = ({word, index}: Props) => {
+export const Word = ({word, index}: WordProps) => {
     const renderWord = (provided: DraggableProvided) => (
-        <span className={`${classes.answer} ${classes.app__answer}`}
+        <span className={`${classes.word} ${classes.app__word}`}
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}

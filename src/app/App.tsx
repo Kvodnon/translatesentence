@@ -1,31 +1,101 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {DragDropContext, DraggableLocation, DragStart, DropResult} from 'react-beautiful-dnd';
+import { useSpeechSynthesis } from 'react-speech-kit';
+import { DragDropContext, DraggableLocation, DragStart, DropResult, PreDragActions, SensorAPI, SnapDragActions } from 'react-beautiful-dnd';
 
 import { Word, State, KeyAsName } from "../app/interfaces";
-import { UserWords } from "../features/UserWords/UserWords";
-import { setUserAnswerList } from "../features/UserWords/userWordsSlice";
-import { SuggestedWords } from "../features/SuggestedWords/SuggestedWords";
-import { setSuggestedList } from "../features/SuggestedWords/suggestedWordsSlice";
+import { Sentence } from '../features/Sentence/Sentence';
+import { Words } from '../Components/Words/Words';
+import { setAnswerWords } from '../features/Answer/answerSlice';
+import { setSuggestedWords } from '../features/Suggested/suggestedSlice';
 
 import classes from "./App.module.css";
 
+
 function App() {
   const dispatch = useDispatch();
-  const userAnswer = useSelector((state: State) => state.userWords);
-  const suggested = useSelector((state: State) => state.suggestedWords);
+  const { answer, suggested, sentence } = useSelector((state: State) => state);
   const [ isSuggestedDropDisabled, setIsSuggestedDropDisabled ] = useState<boolean>(true);
-  
+  const [ isSuccess, setSuccess ] = useState<boolean>(true);
+  const messageType: string = isSuccess ? 'message--success' : 'message--error';
+  const message: boolean | string = !isSuccess && 'Составьте предложение правильно';
+  const { speak, voices } = useSpeechSynthesis();
+  const sensorAPIRef = useRef<SensorAPI | null>(null);
+    
   const id2List: KeyAsName = {
-      'user-answer': {
-        list: userAnswer,
-        setList: setUserAnswerList
+      answer: {
+        list: answer,
+        setList: setAnswerWords
       },
-      'suggested-list': {
+      suggested: {
         list: suggested,
-        setList: setSuggestedList
+        setList: setSuggestedWords
       }
   };
+  
+  const delay = (fn: Function, time: number = 50) => new Promise((resolve) => setTimeout(() => {
+      fn();
+      resolve(1);
+    }, time));
+
+  const findSuggestedWord = (draggableId: string, suggested: Word[]) => suggested.find((word: Word) => word.id === Number(draggableId.split('-')[1]))?.text;
+
+  const selectWords = (list: Word[]) => list.map((word) => word.text)
+
+  const repeatDelay = async(count: number, direction: Function) => {
+    for (let i = 0; i < count; i++) {
+      await delay(direction);
+    }
+
+
+  }
+
+  const lift = async(draggableId: string, needed: string = '', result: Word[]) => {
+    const rightWords = await selectWords(sentence.startSuggestedOrder);
+    const suggestedWords = await selectWords(result);
+    const api: SensorAPI | null = sensorAPIRef.current;
+
+    let count: number, 
+        direction: Function;
+    const rightWordIndex = rightWords.indexOf(needed);
+    const suggestedWordIndex = suggestedWords.indexOf(needed);
+    
+    if (!api) {
+      console.warn('unable to find sensor api');
+      return null;
+    }
+
+    
+    if (suggestedWords.length === 1) return;
+    
+    if (rightWordIndex === suggestedWordIndex) return;
+    
+    const preDrag: PreDragActions | null = api.tryGetLock(draggableId);
+
+    if (!preDrag) {
+      console.log('unable to start capturing');
+      return null;
+    }
+    
+    const actions: SnapDragActions = preDrag.snapLift();
+    const { moveLeft, moveRight, drop } = actions;
+
+    if (rightWordIndex > suggestedWordIndex) {
+      count = rightWordIndex - suggestedWordIndex;
+
+      direction = moveRight;
+    } else {
+      count = suggestedWordIndex - rightWordIndex;
+
+      direction = moveLeft;
+    }
+    
+    await repeatDelay(count, direction);
+
+    await delay(drop);
+      
+    setIsSuggestedDropDisabled(true);
+  }
 
   // a little function to help us with reordering the result
   const reorder = (list: Word[], startIndex: number, endIndex: number) => {
@@ -35,8 +105,8 @@ function App() {
   
       return result;
   };
-  
-  const sortSuggestedWords = (suggestedWords: Word[]) => [...suggestedWords].sort((prev: Word, next: Word) => prev.id - next.id);
+
+  const getList = (id: string): Word[] => id2List[id].list;
   
   /**
    * Moves an item from one list to another list.
@@ -56,33 +126,25 @@ function App() {
       return result;
   };
 
-  /**
-   * A semi-generic way to handle multiple lists. Matches
-   * the IDs of the droppable container to the names of the
-   * source arrays stored in the state.
-   */
+  const onDragStart = (result: DragStart) => result.source.droppableId === 'answer' && setIsSuggestedDropDisabled(false);
 
-  const getList = (id: string): Word[] => id2List[id].list;
+  const onDragEnd = async(result: DropResult) => {
+      const { source, destination, draggableId } = result;
 
-  const onDragStart = (result: DragStart) => result.source.droppableId === 'user-answer' && setIsSuggestedDropDisabled(false);
-
-  const onDragEnd = (result: DropResult) => {
-      const { source, destination } = result;
-      const handler = id2List[source.droppableId];
-
-      // dropped outside the list
       if (!destination) {
           return;
       }
 
       if (source.droppableId === destination.droppableId) {
+          const handler = id2List[source.droppableId];
+
           const items = reorder(
               getList(source.droppableId),
               source.index,
               destination.index
           );
-
-          handler.setList(items);
+          
+          dispatch(handler.setList(items));
       } else {
           const result = move(
               getList(source.droppableId),
@@ -91,27 +153,43 @@ function App() {
               destination
           );
 
-          dispatch(setUserAnswerList(result['user-answer']));
-          dispatch(setSuggestedList(result['suggested-list']));
+          dispatch(setAnswerWords(result['answer']));
+          dispatch(setSuggestedWords(result['suggested']));
           
-          if (destination.droppableId === 'suggested-list') {
-            dispatch(setSuggestedList(sortSuggestedWords(result['suggested-list'])));
+          if (destination.droppableId === 'suggested') {
+            dispatch(setSuggestedWords(result['suggested']));
+            const needed = findSuggestedWord(draggableId, result['suggested']);
+
+            await lift(draggableId, needed, result['suggested']);
           }
       }
-      
-      setIsSuggestedDropDisabled(true);
   };
 
+  const isAnswer:boolean = selectWords(sentence.rightAnswer).join() === selectWords(answer).join();
+
+  const handleClick = () => {
+    setSuccess(isAnswer);
+    
+    return isAnswer && speak({ text: selectWords(sentence.rightAnswer).join(' '), voice: voices[2] });
+  }
+
+  const sensorsParam = () => [(api) => { sensorAPIRef.current = api }];
+
   return (
-    <div className="App">
+    <div className={classes.App}>
       <div className={classes.container}>
         <h1 className={classes.heading}>Переведите это предложение</h1>
 
-        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
-          <UserWords key="user-answer" />
-          <SuggestedWords key="suggested-list" isDropDisabled={isSuggestedDropDisabled}/> 
+        <Sentence />
+
+        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart} sensors={sensorsParam()}>
+          <Words key="answer" words={answer} containerClass="answer" />
+          <Words key="suggested" words={suggested} containerClass="suggested" isDropDisabled={isSuggestedDropDisabled} />
         </DragDropContext>
-        
+
+        <div className={`${classes.message} ${classes['app__message']} ${classes[messageType]}`}>{message}</div>
+
+        <button onClick={handleClick} className={`${classes.check} ${classes['check__button']}`}>Проверить</button>
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
-
-import suggestedWordsReducer from "../features/SuggestedWords/suggestedWordsSlice";
-import userWordsReducer from "../features/UserWords/userWordsSlice";
+import answerReducer from "../features/Answer/answerSlice";
+import sentenceReducer from "../features/Sentence/sentenceSlice";
+import suggestedReducer from "../features/Suggested/suggestedSlice";
 
 export const store = configureStore({
   reducer: {
-    suggestedWords: suggestedWordsReducer,
-    userWords: userWordsReducer
+    sentence: sentenceReducer,
+    answer: answerReducer,
+    suggested: suggestedReducer
   }
 });

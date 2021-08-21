@@ -1,0 +1,17 @@
+.words {
+    display: flex;
+    flex-wrap: wrap;
+}
+.app__words {
+    margin: 40px 0
+}
+.answer {
+    min-height: 20px;
+    border-top: 1px solid;
+    border-bottom: 1px solid;
+    padding: 5px 0
+}
+.suggested {
+    padding: 10px 0 30px;
+    margin: 0
+}
