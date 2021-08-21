@@ -3,8 +3,9 @@
     background: white;
     border-radius: 10px;
     cursor: grab;
+    user-select: none;
 }
 .app__word {
-    margin: 0 5px;
+    margin: 5px;
     padding: 5px 10px;
 }

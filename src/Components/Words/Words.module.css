@@ -1,5 +1,6 @@
 .words {
     display: flex;
+    flex-wrap: wrap;
 }
 .app__words {
     margin: 40px 0

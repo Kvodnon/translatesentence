@@ -1,4 +1,4 @@
-import {Draggable, DraggableProvided} from "react-beautiful-dnd";
+import { Draggable, DraggableProvided } from "react-beautiful-dnd";
 
 import { WordProps } from '../../app/interfaces';
 

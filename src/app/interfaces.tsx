@@ -30,5 +30,9 @@ export interface KeyAsName {
 export interface WordsProps {
     words: Word[],
     containerClass: string,
-    isDropDisabled?:boolean
+    isDropDisabled?: boolean
+}
+
+export interface directions {
+    [x: string]: Function
 }

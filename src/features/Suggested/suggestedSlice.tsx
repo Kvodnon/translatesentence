@@ -6,16 +6,44 @@ export const SuggestedSlice = createSlice({
     name: 'suggested',
     initialState: [
         {
-            id: 1,
-            text: 'She'
+            id: 2,
+            text: 'like'
+        },
+        {
+            id: 7,
+            text: "don't"
+        },
+        {
+            id: 4,
+            text: 'but'
         },
         {
             id: 3,
-            text: 'eating'
+            text: 'hockey'
         },
         {
-            id: 2,
-            text: 'is'
+            id: 8,
+            text: 'favorite'
+        },
+        {
+            id: 10,
+            text: 'I'
+        },
+        {
+            id: 1,
+            text: 'I'
+        },
+        {
+            id: 6,
+            text: 'have'
+        },
+        {
+            id: 9,
+            text: 'team'
+        },
+        {
+            id: 5,
+            text: 'a'
         }
     ] as Word[],
     reducers: {

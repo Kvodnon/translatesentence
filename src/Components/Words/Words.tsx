@@ -21,7 +21,7 @@ export const Words = ({words, containerClass, isDropDisabled = false}: WordsProp
 
     return (
         <Droppable droppableId={containerClass} direction="horizontal" isDropDisabled={isDropDisabled}>
-            {(provided) => renderContainer(provided)}
+            {renderContainer}
         </Droppable>
     );
 }

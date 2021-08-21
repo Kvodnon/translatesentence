@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {DragDropContext, DraggableLocation, DragStart, DropResult, PreDragActions, SensorAPI, SnapDragActions} from 'react-beautiful-dnd';
+import { useSpeechSynthesis } from 'react-speech-kit';
+import { DragDropContext, DraggableLocation, DragStart, DropResult, PreDragActions, SensorAPI, SnapDragActions } from 'react-beautiful-dnd';
 
 import { Word, State, KeyAsName } from "../app/interfaces";
 import { Sentence } from '../features/Sentence/Sentence';
@@ -10,83 +11,86 @@ import { setSuggestedWords } from '../features/Suggested/suggestedSlice';
 
 import classes from "./App.module.css";
 
-const {useSpeechSynthesis} = require('react-speech-kit');
 
 function App() {
   const dispatch = useDispatch();
   const { answer, suggested, sentence } = useSelector((state: State) => state);
   const [ isSuggestedDropDisabled, setIsSuggestedDropDisabled ] = useState<boolean>(true);
   const [ isSuccess, setSuccess ] = useState<boolean>(true);
-  const messageType = isSuccess ? 'message--success' : 'message--error';
-  const message = !isSuccess && 'Составьте предложение правильно';
+  const messageType: string = isSuccess ? 'message--success' : 'message--error';
+  const message: boolean | string = !isSuccess && 'Составьте предложение правильно';
   const { speak, voices } = useSpeechSynthesis();
   const sensorAPIRef = useRef<SensorAPI | null>(null);
     
   const id2List: KeyAsName = {
-      'answer': {
+      answer: {
         list: answer,
         setList: setAnswerWords
       },
-      'suggested': {
+      suggested: {
         list: suggested,
         setList: setSuggestedWords
       }
   };
   
-  const delay = (fn: Function, time: number = 100)  => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        fn();
-        resolve(0);
-      }, time);
-    });
-  }
+  const delay = (fn: Function, time: number = 50) => new Promise((resolve) => setTimeout(() => {
+      fn();
+      resolve(1);
+    }, time));
 
-  const findSuggestedWord = (draggableId: string, suggested: Word[]) => {
-    const needed = Number(draggableId.split('-')[1]);
-
-    return suggested.find((word) => word.id === needed)?.text;
-  }
+  const findSuggestedWord = (draggableId: string, suggested: Word[]) => suggested.find((word: Word) => word.id === Number(draggableId.split('-')[1]))?.text;
 
   const selectWords = (list: Word[]) => list.map((word) => word.text)
 
-   const lift = async(draggableId: string, needed: string = '', result: any) => {
-    const rightWords = selectWords(sentence.startSuggestedOrder);
-    const suggestedWords = selectWords(result);
+  const repeatDelay = async(count: number, direction: Function) => {
+    for (let i = 0; i < count; i++) {
+      await delay(direction);
+    }
+
+
+  }
+
+  const lift = async(draggableId: string, needed: string = '', result: Word[]) => {
+    const rightWords = await selectWords(sentence.startSuggestedOrder);
+    const suggestedWords = await selectWords(result);
     const api: SensorAPI | null = sensorAPIRef.current;
 
+    let count: number, 
+        direction: Function;
+    const rightWordIndex = rightWords.indexOf(needed);
+    const suggestedWordIndex = suggestedWords.indexOf(needed);
+    
     if (!api) {
       console.warn('unable to find sensor api');
       return null;
     }
 
+    
+    if (suggestedWords.length === 1) return;
+    
+    if (rightWordIndex === suggestedWordIndex) return;
+    
     const preDrag: PreDragActions | null = api.tryGetLock(draggableId);
 
     if (!preDrag) {
       console.log('unable to start capturing');
       return null;
     }
-
-    let count;
     
     const actions: SnapDragActions = preDrag.snapLift();
     const { moveLeft, moveRight, drop } = actions;
 
-    if (rightWords.indexOf(needed) > suggestedWords.indexOf(needed)) {
-      count = rightWords.indexOf(needed) - suggestedWords.indexOf(needed);
+    if (rightWordIndex > suggestedWordIndex) {
+      count = rightWordIndex - suggestedWordIndex;
 
-      for (let i = 0; i < count; i++) {
-        await delay(moveRight);
-      }
+      direction = moveRight;
+    } else {
+      count = suggestedWordIndex - rightWordIndex;
+
+      direction = moveLeft;
     }
     
-    if (rightWords.indexOf(needed) < suggestedWords.indexOf(needed)) {
-      count = suggestedWords.indexOf(needed) - rightWords.indexOf(needed);
-
-      for (let i = 0; i < count; i++) {
-        await delay(moveLeft);
-      }
-    }
+    await repeatDelay(count, direction);
 
     await delay(drop);
       
@@ -102,11 +106,6 @@ function App() {
       return result;
   };
 
-  /**
-   * A semi-generic way to handle multiple lists. Matches
-   * the IDs of the droppable container to the names of the
-   * source arrays stored in the state.
-   */
   const getList = (id: string): Word[] => id2List[id].list;
   
   /**
@@ -158,25 +157,23 @@ function App() {
           dispatch(setSuggestedWords(result['suggested']));
           
           if (destination.droppableId === 'suggested') {
-            await dispatch(setSuggestedWords(result['suggested']));
+            dispatch(setSuggestedWords(result['suggested']));
             const needed = findSuggestedWord(draggableId, result['suggested']);
 
-            lift(draggableId, needed, result['suggested']);
+            await lift(draggableId, needed, result['suggested']);
           }
       }
   };
 
-  const checkAnswer = ():boolean => {
-    return JSON.stringify(sentence.rightAnswer) === JSON.stringify(answer);
-  }
+  const isAnswer:boolean = selectWords(sentence.rightAnswer).join() === selectWords(answer).join();
 
   const handleClick = () => {
-    setSuccess(checkAnswer());
+    setSuccess(isAnswer);
     
-    if (checkAnswer()) {
-      speak({ text: 'She is eating', voice: voices[2] });
-    }
+    return isAnswer && speak({ text: selectWords(sentence.rightAnswer).join(' '), voice: voices[2] });
   }
+
+  const sensorsParam = () => [(api) => { sensorAPIRef.current = api }];
 
   return (
     <div className={classes.App}>
@@ -185,20 +182,14 @@ function App() {
 
         <Sentence />
 
-        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart} sensors={[
-          (api) => {
-            sensorAPIRef.current = api;
-          },
-        ]}>
+        <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart} sensors={sensorsParam()}>
           <Words key="answer" words={answer} containerClass="answer" />
           <Words key="suggested" words={suggested} containerClass="suggested" isDropDisabled={isSuggestedDropDisabled} />
         </DragDropContext>
 
-
         <div className={`${classes.message} ${classes['app__message']} ${classes[messageType]}`}>{message}</div>
 
         <button onClick={handleClick} className={`${classes.check} ${classes['check__button']}`}>Проверить</button>
-        
       </div>
     </div>
   );
