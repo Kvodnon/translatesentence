@@ -34,5 +34,12 @@ export interface WordsProps {
 }
 
 export interface directions {
-    [x: string]: Function
+    [key: string]: Function
 }
+
+export interface MessageProps {
+    ({isSuccess}: {isSuccess: boolean}): JSX.Element;
+};
+export interface CheckProps {
+    ({selectWords, setSuccess}: {selectWords: Function, setSuccess: Function}): JSX.Element;
+};

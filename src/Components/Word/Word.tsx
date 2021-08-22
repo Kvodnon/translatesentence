@@ -1,18 +1,24 @@
 import { Draggable, DraggableProvided } from "react-beautiful-dnd";
+import styled from 'styled-components'
 
 import { WordProps } from '../../app/interfaces';
 
-import classes from "./Word.module.css";
+const Span = styled.span`
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 10px;
+    cursor: grab;
+    user-select: none;
 
-export const Word = ({word, index}: WordProps) => {
+    margin: 5px;
+    padding: 5px 10px;
+`;
+
+const Word = ({word, index}: WordProps) => {
     const renderWord = (provided: DraggableProvided) => (
-        <span className={`${classes.word} ${classes.app__word}`}
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-        >
+        <Span  ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
             {word.text}
-        </span>
+        </Span>
     );
 
     return (
@@ -21,3 +27,5 @@ export const Word = ({word, index}: WordProps) => {
         </Draggable>
     );
 }
+
+export default Word;

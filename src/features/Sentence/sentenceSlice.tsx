@@ -1,7 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-import { State } from "../../app/interfaces";
-
 export const SentenceSlice = createSlice({
     name: 'sentence',
     initialState: {
@@ -130,7 +128,5 @@ export const SentenceSlice = createSlice({
     },
     reducers: {}
 });
-
-export const selectSentence = (state: State) => state.sentence;
 
 export default SentenceSlice.reducer;
